@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply font-sans;
+  @apply antialiased;
+}
+
+ul {
+  @apply list-disc;
+  @apply ml-4;
+  @apply my-2;
+  @apply space-y-1;
+}
