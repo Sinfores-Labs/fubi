@@ -332,7 +332,6 @@ export default {
       </div>
       <div class="flex-1 bg-white overflow-auto px-4 space-y-4 text-sm">
         <p>Всем привет! ФСТЭК у нас что-то придумал, а мы постарались чтобы это выглядело хотя бы на 2015 год.</p>
-        <iframe src="https://www.youtube.com/embed/1YlnL0qa2Ws" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
       </div>
     </div>
 
