@@ -7,84 +7,13 @@ import Popper from "vue3-popper";
 import { SearchIcon, MapIcon, XIcon, UploadIcon, DownloadIcon, FilterIcon, SelectorIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon, ViewGridAddIcon, PlusSmIcon, ChartBarIcon, CollectionIcon } from '@heroicons/vue/outline'
 import DefaultDB from "/src/data/bdu_v1.json";
 import { useSearch } from '/src/composables/search'
+import { useFlyovers } from '/src/composables/flyovers'
 
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 
-const swatches = [
-  'bg-gray-100', 'bg-gray-200', 'bg-gray-300', 'bg-gray-400', 'bg-gray-500', 'bg-gray-600', 'bg-gray-700', 'bg-gray-800', 'bg-gray-900',
-  'bg-yellow-100', 'bg-yellow-200', 'bg-yellow-300', 'bg-yellow-400', 'bg-yellow-500', 'bg-yellow-600', 'bg-yellow-700', 'bg-yellow-800', 'bg-yellow-900',
-  'bg-green-100', 'bg-green-200', 'bg-green-300', 'bg-green-400', 'bg-green-500', 'bg-green-600', 'bg-green-700', 'bg-green-800', 'bg-green-900',
-  'bg-blue-100', 'bg-blue-200', 'bg-blue-300', 'bg-blue-400', 'bg-blue-500', 'bg-blue-600', 'bg-blue-700', 'bg-blue-800', 'bg-blue-900',
-  'bg-pink-100', 'bg-pink-200', 'bg-pink-300', 'bg-pink-400', 'bg-pink-500', 'bg-pink-600', 'bg-pink-700', 'bg-pink-800', 'bg-pink-900',
-  'bg-red-100', 'bg-red-200', 'bg-red-300', 'bg-red-400', 'bg-red-500', 'bg-red-600', 'bg-red-700', 'bg-red-800', 'bg-red-900',
-  'bg-purple-100', 'bg-purple-200', 'bg-purple-300', 'bg-purple-400', 'bg-purple-500', 'bg-purple-600', 'bg-purple-700', 'bg-purple-800', 'bg-purple-900'
-];
-
-const layerTemplate = {
-  id: 1,
-  name: "New Layer",
-  description: "",
-  palette: [
-    {
-        range: "1-10",
-        color: "bg-gray-100",
-        active: false
-    },
-    {
-        range: "11-20",
-        color: "bg-gray-100",
-        active: false
-    },
-    {
-        range: "21-30",
-        color: "bg-gray-100",
-        active: false
-    },
-    {
-        range: "31-40",
-        color: "bg-gray-100",
-        active: false
-    },
-    {
-        range: "41-50",
-        color: "bg-gray-100",
-        active: false
-    },
-    {
-        range: "51-60",
-        color: "bg-gray-100",
-        active: false
-    },
-    {
-        range: "61-70",
-        color: "bg-gray-100",
-        active: false
-    },
-    {
-        range: "71-80",
-        color: "bg-gray-100",
-        active: false
-    },
-    {
-        range: "81-90",
-        color: "bg-gray-100",
-        active: false
-    },
-    {
-        range: "91-100",
-        color: "bg-gray-100",
-        active: false
-    }
-  ]
-};
-
-const threatLayerTemplate = {
-    id: 1,
-    color: "bg-gray-100",
-    note: "",
-    score: 0
-};
+import { swatches } from '/src/data/swatches'
+import { layerTemplate, threatLayerTemplate } from '/src/data/layers'
 
 export default {
   components: { 
@@ -128,31 +57,14 @@ export default {
       }
     }
     const isAdditionalFieldsVisible = ref(false)
-
-    const clearFlyOvers = () => {
-      isSearchVisible.value = false;
-      isLoadVisible.value = false;
-      isScoreVisible.value = false;
-      isDataVisible.value = false;
-      isLayerVisible.value = false;
-      isAboutVisible.value = false;
-      isFiltersVisible.value = false;
-    }
-
-    const isSearchVisible = ref(false);
-    const showSearchFlyOver = () => { clearFlyOvers(); isSearchVisible.value = true };
-    const hideSearchFlyOver = () => { isSearchVisible.value = false };
-    const toggleSearchFlyOver = () => { isSearchVisible.value ? hideSearchFlyOver() : showSearchFlyOver() };
+    
     const { searchQuery, searchResults } = useSearch()
+    const { showFlyover, hideFlyover, toggleFlyover, about, filters, layer, search, score, data, load } = useFlyovers()
 
-    const isLoadVisible = ref(false);
-    const showLoadFlyOver = () => { clearFlyOvers(); isLoadVisible.value = true };
-    const hideLoadFlyOver = () => { isLoadVisible.value = false };
-    const toggleLoadFlyOver = () => { isLoadVisible.value ? hideLoadFlyOver() : showLoadFlyOver() };
     let sourceJSONFile = undefined;
     const loadJSON = () => {
       let reader = new FileReader();
-      if (isLoadVisible.value) {
+      if (load) {
         reader.onload = event => {
           db.value = JSON.parse(event.target.result);
           activeLayer.value = db.value.layers[0];
@@ -193,15 +105,6 @@ export default {
       }
     };
 
-    const isDataVisible = ref(false);
-    const showDataFlyOver = () => { clearFlyOvers(); isDataVisible.value = true };
-    const hideDataFlyOver = () => { isDataVisible.value = false; };
-    const toggleDataFlyOver = () => { isDataVisible.value ? hideDataFlyOver() : showDataFlyOver() };
-
-    const isScoreVisible = ref(false);
-    const showScoreFlyOver = () => { clearFlyOvers(); isScoreVisible.value = true };
-    const hideScoreFlyOver = () => { isScoreVisible.value = false };
-    const toggleScoreFlyOver = () => { isScoreVisible.value ? hideScoreFlyOver() : showScoreFlyOver() };
     const setActiveScoreRange = (range) => {
       activeLayer.value.palette.forEach(el => el.active = false);
       activeLayer.value.palette.find(el => el.range === range).active = true;
@@ -247,33 +150,13 @@ export default {
       setActiveLayer(layer.id);
     }
 
-    const isAboutVisible = ref(false);
-    const showAboutFlyOver = () => { clearFlyOvers(); isAboutVisible.value = true };
-    const hideAboutFlyOver = () => { isAboutVisible.value = false; };
-    const toggleAboutFlyOver = () => { isAboutVisible.value ? hideAboutFlyOver() : showAboutFlyOver() };
-
-    const isLayerVisible = ref(false);
-    const showLayerFlyOver = () => { clearFlyOvers(); isLayerVisible.value = true };
-    const hideLayerFlyOver = () => { isLayerVisible.value = false; };
-    const toggleLayerFlyOver = () => { isLayerVisible.value ? hideLayerFlyOver() : showLayerFlyOver() };
-
     const getTargetById = (id) => {
       return db.value.targets.find(el => el.id === id)
     }
 
-    const isFiltersVisible = ref(false);
-    const showFiltersFlyOver = () => { clearFlyOvers(); isFiltersVisible.value = true };
-    const hideFiltersFlyOver = () => { isFiltersVisible.value = false; };
-    const toggleFiltersFlyOver = () => { isFiltersVisible.value ? hideFiltersFlyOver() : showFiltersFlyOver() };
     const showImpactConfdentiality = ref(true)
     const showImpactIntegrity = ref(true)
     const showImpactAvailability = ref(true)
-    const showIntruderE1 = ref(true)
-    const showIntruderE2 = ref(true)
-    const showIntruderE3 = ref(true)
-    const showIntruderI1 = ref(true)
-    const showIntruderI2 = ref(true)
-    const showIntruderI3 = ref(true)
     const selectedTargets = ref([])
     const copyTargets = () => {
       selectedTargets.value = []
@@ -330,32 +213,15 @@ export default {
       setActiveThreat,
       isAdditionalFieldsVisible,
 
-      isSearchVisible,
-      showSearchFlyOver,
-      hideSearchFlyOver,
-      toggleSearchFlyOver,
       searchQuery,
       searchResults,
 
-      isLoadVisible,
-      showLoadFlyOver,
-      hideLoadFlyOver,
-      toggleLoadFlyOver,
       loadDefault,
       saveJSON,
       getRootProps,
       getInputProps,
       ...rest,
 
-      isDataVisible,
-      showDataFlyOver,
-      hideDataFlyOver,
-      toggleDataFlyOver,
-
-      isScoreVisible,
-      showScoreFlyOver,
-      hideScoreFlyOver,
-      toggleScoreFlyOver,
       setActiveScoreRange,
       setScoreRangeColor,
       getSwatchFromPallete,
@@ -365,31 +231,13 @@ export default {
       setActiveLayer,
       createLayer,
 
-      isAboutVisible,
-      showAboutFlyOver,
-      hideAboutFlyOver,
-      toggleAboutFlyOver,
-
-      isLayerVisible,
-      showLayerFlyOver,
-      hideLayerFlyOver,
-      toggleLayerFlyOver,
+      showFlyover, hideFlyover, toggleFlyover, about, filters, layer, search, score, data, load,
 
       getTargetById,
 
-      isFiltersVisible,
-      showFiltersFlyOver,
-      hideFiltersFlyOver,
-      toggleFiltersFlyOver,
       showImpactConfdentiality,
       showImpactIntegrity,
       showImpactAvailability,
-      showIntruderE1,
-      showIntruderE2,
-      showIntruderE3,
-      showIntruderI1,
-      showIntruderI2,
-      showIntruderI3,
       selectedTargets,
       toggleSelectedTarget,
       selectedIntruders,
@@ -410,11 +258,11 @@ export default {
     <!-- ----------------- FLYOVERS START--------------------- -->
 
     <!-- About -->
-    <div :class="isAboutVisible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 left-2 w-96 h-large overflow-hidden flex flex-col rounded-t border shadow-xl">
+    <div :class="about ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 left-2 w-96 h-large overflow-hidden flex flex-col rounded-t border shadow-xl">
       <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
         <div class="flex-1 font-bold">Что ты такое?</div>
         <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideAboutFlyOver()">
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('about')">
             <XIcon class="h-4 w-4 text-gray-400"/>
           </div>
         </div>
@@ -425,11 +273,11 @@ export default {
     </div>
 
     <!-- Filters -->
-    <div v-if="isLayerReady" :class="isFiltersVisible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-108 w-96 h-large overflow-hidden flex flex-col rounded-t border shadow-xl">
+    <div v-if="isLayerReady" :class="filters ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-108 w-96 h-large overflow-hidden flex flex-col rounded-t border shadow-xl">
       <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
         <div class="flex-1 font-bold">Фильтры</div>
         <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFiltersFlyOver()">
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('filters')">
             <XIcon class="h-4 w-4 text-gray-400"/>
           </div>
         </div>
@@ -564,11 +412,11 @@ export default {
     </div>
 
     <!-- Layer -->
-    <div v-if="isLayerReady" :class="isLayerVisible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-96 w-96 h-96 overflow-hidden flex flex-col rounded-t border shadow-xl">
+    <div v-if="isLayerReady" :class="layer ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-96 w-96 h-96 overflow-hidden flex flex-col rounded-t border shadow-xl">
       <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
         <div class="flex-1 font-bold">Свойства слоя</div>
         <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideLayerFlyOver()">
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('layer')">
             <XIcon class="h-4 w-4 text-gray-400"/>
           </div>
         </div>
@@ -603,7 +451,7 @@ export default {
     </div>
 
     <!-- Search -->
-    <div :class="isSearchVisible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-72 w-96 h-large overflow-hidden flex flex-col rounded-t border shadow-xl">
+    <div v-if="isLayerReady" :class="search ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-72 w-96 h-large overflow-hidden flex flex-col rounded-t border shadow-xl">
       <div class="h-16 bg-white flex items-center px-4 space-x-2">
         <label class="block flex-1">
           <input type="text" class="
@@ -617,7 +465,7 @@ export default {
             " placeholder="Поиск..." v-model="searchQuery">
         </label>
         <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideSearchFlyOver()">
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('search')">
             <XIcon class="h-4 w-4 text-gray-400"/>
           </div>
         </div>
@@ -636,11 +484,11 @@ export default {
     </div>
 
     <!-- Score -->
-    <div v-if="isLayerReady" :class="isScoreVisible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-40 w-96 h-96 overflow-hidden flex flex-col rounded-t border shadow-xl">
+    <div v-if="isLayerReady" :class="score ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-40 w-96 h-96 overflow-hidden flex flex-col rounded-t border shadow-xl">
       <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
         <div class="flex-1 font-bold">Настройка цветов оценки</div>
         <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideScoreFlyOver()">
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('score')">
             <XIcon class="h-4 w-4 text-gray-400"/>
           </div>
         </div>
@@ -675,11 +523,11 @@ export default {
     </div>
 
     <!-- Data -->
-    <div v-if="isLayerReady" :class="isDataVisible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-16 w-96 h-96 overflow-hidden flex flex-col rounded-t border shadow-xl">
+    <div v-if="isLayerReady" :class="data ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-16 w-96 h-96 overflow-hidden flex flex-col rounded-t border shadow-xl">
       <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
         <div class="flex-1 font-bold">Загрузить данные</div>
         <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideDataFlyOver()">
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('data')">
             <XIcon class="h-4 w-4 text-gray-400"/>
           </div>
         </div>
@@ -699,11 +547,11 @@ export default {
     </div>
 
     <!-- Load -->
-    <div :class="isLoadVisible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-2 w-96 h-96 overflow-hidden flex flex-col rounded-t border shadow-xl">
+    <div :class="load ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-2 w-96 h-96 overflow-hidden flex flex-col rounded-t border shadow-xl">
       <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
         <div class="flex-1 font-bold">Загрузка модели</div>
         <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideLoadFlyOver()">
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('load')">
             <XIcon class="h-4 w-4 text-gray-400"/>
           </div>
         </div>
@@ -970,35 +818,35 @@ export default {
     <!-- --------------------------------------------------------------------- -->
     <!-- Footer -->
     <div class="z-50 h-10 bg-gray-50 border-t flex items-center justify-between px-4 text-xs">
-      <div @click="toggleAboutFlyOver()" class="cursor-pointer"><span class="font-bold">FUBI</span> &middot; Sinfores SX</div>
+      <div @click="toggleFlyover('about')" class="cursor-pointer"><span class="font-bold">FUBI</span> &middot; Sinfores SX</div>
       <div class="flex items-center space-x-2 border-b-2 border-transparent">
         <!-- Filters -->
-        <div v-if="isLayerReady" @click="toggleFiltersFlyOver()" :class="[isFiltersVisible ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+        <div v-if="isLayerReady" @click="toggleFlyover('filters')" :class="[filters ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
           <FilterIcon class="w-5 h-5" aria-hidden="true" />
           <div>Фильтры</div>
         </div>
         <!-- Layer -->
-        <div v-if="isLayerReady" @click="toggleLayerFlyOver()" :class="[isLayerVisible ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+        <div v-if="isLayerReady" @click="toggleFlyover('layer')" :class="[layer ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
           <CollectionIcon class="w-5 h-5" aria-hidden="true" />
           <div>Слой</div>
         </div>
         <!-- Search -->
-        <div v-if="isLayerReady" @click="toggleSearchFlyOver()" :class="[isSearchVisible ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+        <div v-if="isLayerReady" @click="toggleFlyover('search')" :class="[search ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
           <SearchIcon class="w-5 h-5" aria-hidden="true" />
           <div>Поиск</div>
         </div>
         <!-- Score -->
-        <div v-if="isLayerReady" @click="toggleScoreFlyOver()" :class="[isScoreVisible ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+        <div v-if="isLayerReady" @click="toggleFlyover('score')" :class="[score ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
           <ChartBarIcon class="w-5 h-5" aria-hidden="true" />
           <div>Оценка</div>
         </div>
         <!-- Data -->
-        <div v-if="isLayerReady" @click="toggleDataFlyOver()" :class="[isDataVisible ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+        <div v-if="isLayerReady" @click="toggleFlyover('data')" :class="[data ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
           <ViewGridAddIcon class="w-5 h-5" aria-hidden="true" />
           <div>Данные</div>
         </div>
         <!-- Load -->
-        <div @click="toggleLoadFlyOver()" :class="[isLoadVisible ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+        <div @click="toggleFlyover('load')" :class="[load ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
           <UploadIcon class="w-5 h-5" aria-hidden="true" />
           <div>Загрузить</div>
         </div>
