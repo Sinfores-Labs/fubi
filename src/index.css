@@ -5,6 +5,9 @@
 body {
   @apply font-sans;
   @apply antialiased;
+  @apply w-screen;
+  @apply h-screen;
+  @apply overflow-hidden;
 }
 
 ul {
@@ -12,4 +15,8 @@ ul {
   @apply ml-4;
   @apply my-2;
   @apply space-y-1;
+}
+
+.grid .inline-block {
+  @apply w-full;
 }

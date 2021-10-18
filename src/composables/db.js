@@ -1,4 +1,4 @@
-import DefaultDB from "/src/data/threats_v1.json";
+import DefaultDB from "/src/data/bdu_v1.json";
 
 const db = DefaultDB
 
