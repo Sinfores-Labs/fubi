@@ -4,11 +4,12 @@ import { useDropzone } from 'vue3-dropzone';
 import { saveAs } from 'file-saver';
 import Markdown from 'vue3-markdown-it';
 import Popper from "vue3-popper";
-import { SearchIcon, MapIcon, XIcon, UploadIcon, DownloadIcon, FilterIcon, SelectorIcon, CheckIcon, ChevronDownIcon, ViewGridAddIcon, PlusSmIcon, ChartBarIcon, CollectionIcon } from '@heroicons/vue/outline'
+import { SearchIcon, MapIcon, XIcon, UploadIcon, DownloadIcon, FilterIcon, SelectorIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon, ViewGridAddIcon, PlusSmIcon, ChartBarIcon, CollectionIcon } from '@heroicons/vue/outline'
 import DefaultDB from "/src/data/bdu_v1.json";
 import { useSearch } from '/src/composables/search'
 
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
+import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 
 const swatches = [
   'bg-gray-100', 'bg-gray-200', 'bg-gray-300', 'bg-gray-400', 'bg-gray-500', 'bg-gray-600', 'bg-gray-700', 'bg-gray-800', 'bg-gray-900',
@@ -98,13 +99,17 @@ export default {
     SelectorIcon,
     CheckIcon,
     ChevronDownIcon,
+    ChevronUpIcon,
     ViewGridAddIcon,
     PlusSmIcon,
     ChartBarIcon,
     CollectionIcon,
     Popover,
     PopoverButton,
-    PopoverPanel
+    PopoverPanel,
+    Disclosure,
+    DisclosureButton,
+    DisclosurePanel
   },
 
   setup () {
@@ -131,6 +136,7 @@ export default {
       isDataVisible.value = false;
       isLayerVisible.value = false;
       isAboutVisible.value = false;
+      isFiltersVisible.value = false;
     }
 
     const isSearchVisible = ref(false);
@@ -150,6 +156,8 @@ export default {
         reader.onload = event => {
           db.value = JSON.parse(event.target.result);
           activeLayer.value = db.value.layers[0];
+          copyTargets();
+          copyIntruders();
         }
       } else {
         reader.onload = event => {
@@ -174,7 +182,7 @@ export default {
       reader.onerror = error => console.log(error);
       reader.readAsText(sourceJSONFile);
     };
-    const loadDefault = () => { db.value = DefaultDB; activeLayer.value = db.value.layers[0]; }
+    const loadDefault = () => { db.value = DefaultDB; activeLayer.value = db.value.layers[0]; copyTargets(); copyIntruders(); }
     const onDrop = (acceptFiles, rejectReasons) => { sourceJSONFile = acceptFiles[0]; loadJSON(); };
     const { getRootProps, getInputProps, ...rest } = useDropzone({ onDrop })
     const saveJSON = () => {
@@ -253,6 +261,64 @@ export default {
       return db.value.targets.find(el => el.id === id)
     }
 
+    const isFiltersVisible = ref(false);
+    const showFiltersFlyOver = () => { clearFlyOvers(); isFiltersVisible.value = true };
+    const hideFiltersFlyOver = () => { isFiltersVisible.value = false; };
+    const toggleFiltersFlyOver = () => { isFiltersVisible.value ? hideFiltersFlyOver() : showFiltersFlyOver() };
+    const showImpactConfdentiality = ref(true)
+    const showImpactIntegrity = ref(true)
+    const showImpactAvailability = ref(true)
+    const showIntruderE1 = ref(true)
+    const showIntruderE2 = ref(true)
+    const showIntruderE3 = ref(true)
+    const showIntruderI1 = ref(true)
+    const showIntruderI2 = ref(true)
+    const showIntruderI3 = ref(true)
+    const selectedTargets = ref([])
+    const copyTargets = () => {
+      selectedTargets.value = []
+      db.value.targets.forEach(el => {
+        selectedTargets.value.push(el.id);
+      })
+    }
+    const toggleSelectedTarget = (id) => {
+      const index = selectedTargets.value.findIndex(el => el === id)
+      if (index > -1) {
+        selectedTargets.value.splice(index, 1)
+      } else {
+        selectedTargets.value.push(id)
+      }
+    }
+    const selectedIntruders = ref([])
+    const copyIntruders = () => {
+      selectedIntruders.value = []
+      db.value.intruders.forEach(el => {
+        if (el.intruder === 'E' || el.intruder === 'I') {
+          selectedIntruders.value.push(el.id);
+        }
+      })
+    }
+    const toggleSelectedIntruder = (id) => {
+      const index = selectedIntruders.value.findIndex(el => el === id)
+      if (index > -1) {
+        selectedIntruders.value.splice(index, 1)
+      } else {
+        selectedIntruders.value.push(id)
+      }
+    }
+    const intruders = computed(() => {
+      return db.value.intruders.filter(el => el.intruder === 'E' || el.intruder === 'I')
+    })
+    const selectAllTargets = () => { copyTargets(); }
+    const deselectAllTargets = () => { selectedTargets.value = []; }
+    const filteredThreats = computed(() => {
+      return db.value.threats.filter(el => {
+        const targetFlag = el.bdu.targets.find(t => selectedTargets.value.includes(t))
+        const intruderFlag = el.bdu.intruders.find(intruder => selectedIntruders.value.includes(intruder.id))
+        return targetFlag && intruderFlag
+      })
+    });
+
     return {
       swatches,
 
@@ -309,7 +375,30 @@ export default {
       hideLayerFlyOver,
       toggleLayerFlyOver,
 
-      getTargetById
+      getTargetById,
+
+      isFiltersVisible,
+      showFiltersFlyOver,
+      hideFiltersFlyOver,
+      toggleFiltersFlyOver,
+      showImpactConfdentiality,
+      showImpactIntegrity,
+      showImpactAvailability,
+      showIntruderE1,
+      showIntruderE2,
+      showIntruderE3,
+      showIntruderI1,
+      showIntruderI2,
+      showIntruderI3,
+      selectedTargets,
+      toggleSelectedTarget,
+      selectedIntruders,
+      intruders,
+      toggleSelectedIntruder,
+      selectAllTargets,
+      deselectAllTargets,
+
+      filteredThreats
     }
   }
 }
@@ -335,8 +424,147 @@ export default {
       </div>
     </div>
 
+    <!-- Filters -->
+    <div v-if="isLayerReady" :class="isFiltersVisible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-108 w-96 h-large overflow-hidden flex flex-col rounded-t border shadow-xl">
+      <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
+        <div class="flex-1 font-bold">Фильтры</div>
+        <div>
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFiltersFlyOver()">
+            <XIcon class="h-4 w-4 text-gray-400"/>
+          </div>
+        </div>
+      </div>
+      <div class="flex-1 bg-white overflow-auto px-4 pb-32 space-y-4">
+        <!-- Impact -->
+        <!-- <Disclosure v-slot="{ open }">
+          <DisclosureButton
+            class="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-purple-900 bg-purple-100 rounded-lg hover:bg-purple-200 focus:outline-none focus-visible:ring focus-visible:ring-purple-500 focus-visible:ring-opacity-75"
+          >
+            <span>Последствия</span>
+            <ChevronUpIcon
+              :class="open ? 'transform rotate-180' : ''"
+              class="w-5 h-5 text-purple-500"
+            />
+          </DisclosureButton>
+          <DisclosurePanel class="px-2 pt-2 pb-2 text-sm text-gray-500">
+            <div>
+              <label class="inline-flex items-center">
+                <input type="checkbox" class="
+                    rounded
+                    border-gray-300
+                    text-purple-600
+                    shadow-sm
+                    focus:border-purple-300
+                    focus:ring
+                    focus:ring-offset-0
+                    focus:ring-purple-200
+                    focus:ring-opacity-50
+                  " v-model="showImpactConfdentiality">
+                <span class="ml-2">Нарушение конфиденциальности</span>
+              </label>
+            </div>
+            <div>
+              <label class="inline-flex items-center">
+                <input type="checkbox" class="
+                    rounded
+                    border-gray-300
+                    text-purple-600
+                    shadow-sm
+                    focus:border-purple-300
+                    focus:ring
+                    focus:ring-offset-0
+                    focus:ring-purple-200
+                    focus:ring-opacity-50
+                  " v-model="showImpactIntegrity">
+                <span class="ml-2">Нарушение целостности</span>
+              </label>
+            </div>
+            <div>
+              <label class="inline-flex items-center">
+                <input type="checkbox" class="
+                    rounded
+                    border-gray-300
+                    text-purple-600
+                    shadow-sm
+                    focus:border-purple-300
+                    focus:ring
+                    focus:ring-offset-0
+                    focus:ring-purple-200
+                    focus:ring-opacity-50
+                  " v-model="showImpactAvailability">
+                <span class="ml-2">Нарушение доступности</span>
+              </label>
+            </div>
+          </DisclosurePanel>
+        </Disclosure> -->
+        <!-- Targets -->
+        <Disclosure v-slot="{ open }">
+          <DisclosureButton
+            class="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-purple-900 bg-purple-100 rounded-lg hover:bg-purple-200 focus:outline-none focus-visible:ring focus-visible:ring-purple-500 focus-visible:ring-opacity-75"
+          >
+            <span>Объекты воздействия</span>
+            <ChevronUpIcon
+              :class="open ? 'transform rotate-180' : ''"
+              class="w-5 h-5 text-purple-500"
+            />
+          </DisclosureButton>
+          <DisclosurePanel class="px-2 pt-2 pb-2 text-sm text-gray-500 space-y-1">
+            <div class="flex items-center justify-between pb-4">
+              <div @click="selectAllTargets" class="border-dashed border-b cursor-pointer hover:text-gray-800">Выделить все</div>
+              <div @click="deselectAllTargets" class="border-dashed border-b cursor-pointer hover:text-gray-800">Сбросить все</div>
+            </div>
+            <div
+              v-for="target in db.targets"
+              :key="target.id"
+              class="cursor-pointer"
+            >
+              <label class="inline-flex items-center">
+                <input type="checkbox" class="
+                    rounded
+                    border-gray-300
+                    text-purple-600
+                    shadow-sm
+                    focus:border-purple-300
+                    focus:ring
+                    focus:ring-offset-0
+                    focus:ring-purple-200
+                    focus:ring-opacity-50
+                    cursor-pointer
+                  " 
+                  :checked="selectedTargets.includes(target.id)"
+                  @click="toggleSelectedTarget(target.id)"
+                >
+                <span class="ml-2">{{ getTargetById(target.id).name }}</span>
+              </label>
+            </div>
+          </DisclosurePanel>
+        </Disclosure>
+        <!-- Intruders -->
+        <Disclosure v-slot="{ open }">
+          <DisclosureButton
+            class="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-purple-900 bg-purple-100 rounded-lg hover:bg-purple-200 focus:outline-none focus-visible:ring focus-visible:ring-purple-500 focus-visible:ring-opacity-75"
+          >
+            <span>Нарушители</span>
+            <ChevronUpIcon
+              :class="open ? 'transform rotate-180' : ''"
+              class="w-5 h-5 text-purple-500"
+            />
+          </DisclosureButton>
+          <DisclosurePanel class="px-2 pt-2 pb-2 text-sm text-gray-500">
+            <div v-for="intruder in intruders" :key="intruder.id">
+              <label class="inline-flex items-center">
+                <input :checked="selectedIntruders.includes(intruder.id)" @click="toggleSelectedIntruder(intruder.id)" type="checkbox" class="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-300 focus:ring focus:ring-offset-0 focus:ring-purple-200 focus:ring-opacity-50" />
+                <span class="ml-2" v-if="intruder.intruder === 'E'">Внешний ({{ intruder.potential }})</span>
+                <span class="ml-2" v-if="intruder.intruder === 'I'">Внутренний ({{ intruder.potential }})</span>
+              </label>
+            </div>
+          </DisclosurePanel>
+        </Disclosure>
+      </div>
+    </div>
+
     <!-- Layer -->
-    <div v-if="isLayerReady" :class="isLayerVisible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-80 w-96 h-96 overflow-hidden flex flex-col rounded-t border shadow-xl">
+    <div v-if="isLayerReady" :class="isLayerVisible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-96 w-96 h-96 overflow-hidden flex flex-col rounded-t border shadow-xl">
       <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
         <div class="flex-1 font-bold">Свойства слоя</div>
         <div>
@@ -375,7 +603,7 @@ export default {
     </div>
 
     <!-- Search -->
-    <div :class="isSearchVisible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-64 w-96 h-large overflow-hidden flex flex-col rounded-t border shadow-xl">
+    <div :class="isSearchVisible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-72 w-96 h-large overflow-hidden flex flex-col rounded-t border shadow-xl">
       <div class="h-16 bg-white flex items-center px-4 space-x-2">
         <label class="block flex-1">
           <input type="text" class="
@@ -518,12 +746,12 @@ export default {
         </div>
         <!-- Grid -->
         <div class="flex-1 overflow-auto p-4 space-y-4">
-          <div v-if="isLayerReady" class="flex-1 grid grid-cols-10 gap-1">
+          <transition-group name="flip-list" tag="div" v-if="isLayerReady" class="flex-1 grid grid-cols-10 gap-1">
             <Popper
               hover
               arrow
               placement="right"
-              v-for="threat in db.threats"
+              v-for="threat in filteredThreats"
               :key="threat.id"
             >
               <div
@@ -544,7 +772,7 @@ export default {
                 </div>
               </template>
             </Popper>
-          </div>
+          </transition-group>
         </div>
       </div>
       <!-- Details -->
@@ -744,6 +972,11 @@ export default {
     <div class="z-50 h-10 bg-gray-50 border-t flex items-center justify-between px-4 text-xs">
       <div @click="toggleAboutFlyOver()" class="cursor-pointer"><span class="font-bold">FUBI</span> &middot; Sinfores SX</div>
       <div class="flex items-center space-x-2 border-b-2 border-transparent">
+        <!-- Filters -->
+        <div v-if="isLayerReady" @click="toggleFiltersFlyOver()" :class="[isFiltersVisible ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+          <FilterIcon class="w-5 h-5" aria-hidden="true" />
+          <div>Фильтры</div>
+        </div>
         <!-- Layer -->
         <div v-if="isLayerReady" @click="toggleLayerFlyOver()" :class="[isLayerVisible ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
           <CollectionIcon class="w-5 h-5" aria-hidden="true" />
@@ -754,11 +987,6 @@ export default {
           <SearchIcon class="w-5 h-5" aria-hidden="true" />
           <div>Поиск</div>
         </div>
-        <!-- Filters -->
-        <!-- <div class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
-          <FilterIcon class="w-5 h-5" aria-hidden="true" />
-          <div>Filter</div>
-        </div> -->
         <!-- Score -->
         <div v-if="isLayerReady" @click="toggleScoreFlyOver()" :class="[isScoreVisible ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
           <ChartBarIcon class="w-5 h-5" aria-hidden="true" />

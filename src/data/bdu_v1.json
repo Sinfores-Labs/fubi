@@ -450,14 +450,9 @@
     "intruders":
     [
         {
-            "id": "f468bf49-47c9-4a6b-ab37-12cb9f64eccc",
-            "intruder": "T",
-            "potential": 0
-        },
-        {
-            "id": "eb5d000f-56cb-4b70-9a97-24e522e6816b",
-            "intruder": "B",
-            "potential": 0
+            "id": "250914be-7c09-4b1f-a5db-6906e2f88d93",
+            "intruder": "I",
+            "potential": 1
         },
         {
             "id": "c03d8615-6c14-4ccb-9e1f-5f8a381d165f",
@@ -465,29 +460,9 @@
             "potential": 2
         },
         {
-            "id": "9d4df037-23c9-4407-b19c-157a72ddeef0",
-            "intruder": "E",
-            "potential": 3
-        },
-        {
             "id": "9bf3db22-c31e-42b6-a0fd-3fed414b3200",
             "intruder": "I",
             "potential": 3
-        },
-        {
-            "id": "8fa32a32-17ae-4411-ac20-8a72f141c4aa",
-            "intruder": "L",
-            "potential": 0
-        },
-        {
-            "id": "8732b51b-3fd6-498a-9424-ef4bac1c323d",
-            "intruder": "E",
-            "potential": 2
-        },
-        {
-            "id": "250914be-7c09-4b1f-a5db-6906e2f88d93",
-            "intruder": "I",
-            "potential": 1
         },
         {
             "id": "225ca9d1-56bb-4106-8fae-5e5333fca429",
@@ -495,9 +470,15 @@
             "potential": 1
         },
         {
-            "id": "1eb8ff9e-5cd8-443a-92e6-0aee3d01a5d8",
-            "intruder": "U",
-            "potential": 0
+            "id": "9d4df037-23c9-4407-b19c-157a72ddeef0",
+            "intruder": "E",
+            "potential": 3
+        },
+        
+        {
+            "id": "8732b51b-3fd6-498a-9424-ef4bac1c323d",
+            "intruder": "E",
+            "potential": 2
         }
     ],
     "threats":

@@ -31,3 +31,7 @@ ul {
   --popper-theme-padding: 0.75rem;
   --popper-theme-box-shadow: var(0 0 #0000), var(0 0 #0000), var(0 0 #0000);
 }
+
+.flip-list-move {
+  transition: transform 0.3s;
+}
