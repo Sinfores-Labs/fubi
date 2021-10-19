@@ -94,7 +94,7 @@ export default {
       reader.onerror = error => console.log(error);
       reader.readAsText(sourceJSONFile);
     };
-    const loadDefault = () => { db.value = DefaultDB; activeLayer.value = db.value.layers[0]; copyTargets(); copyIntruders(); }
+    const loadDefault = () => { db.value = JSON.parse(JSON.stringify(DefaultDB)); activeLayer.value = db.value.layers[0]; copyTargets(); copyIntruders(); }
     const onDrop = (acceptFiles, rejectReasons) => { sourceJSONFile = acceptFiles[0]; loadJSON(); };
     const { getRootProps, getInputProps, ...rest } = useDropzone({ onDrop })
     const saveJSON = () => {
