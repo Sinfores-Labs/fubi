@@ -4,7 +4,7 @@ import { useDropzone } from 'vue3-dropzone';
 import { saveAs } from 'file-saver';
 import Markdown from 'vue3-markdown-it';
 import Popper from "vue3-popper";
-import { SearchIcon, MapIcon, XIcon, UploadIcon, DownloadIcon, FilterIcon, SelectorIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon, ViewGridAddIcon, PlusSmIcon, ChartBarIcon, CollectionIcon } from '@heroicons/vue/outline'
+import { SearchIcon, MapIcon, XIcon, UploadIcon, DownloadIcon, FilterIcon, SelectorIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon, ViewGridAddIcon, PlusSmIcon, ChartBarIcon, CollectionIcon, TableIcon } from '@heroicons/vue/outline'
 import DefaultDB from "/src/data/bdu_v1.json";
 import { useSearch } from '/src/composables/search'
 import { useFlyovers } from '/src/composables/flyovers'
@@ -24,6 +24,7 @@ export default {
     SearchIcon,
     UploadIcon,
     DownloadIcon,
+    TableIcon,
     FilterIcon,
     SelectorIcon,
     CheckIcon,
@@ -59,7 +60,7 @@ export default {
     const isAdditionalFieldsVisible = ref(false)
     
     const { searchQuery, searchResults } = useSearch()
-    const { showFlyover, hideFlyover, toggleFlyover, about, filters, layer, search, score, data, load } = useFlyovers()
+    const { showFlyover, hideFlyover, toggleFlyover, about, table, filters, layer, search, score, data, load } = useFlyovers()
 
     let sourceJSONFile = undefined;
     const loadJSON = () => {
@@ -231,7 +232,7 @@ export default {
       setActiveLayer,
       createLayer,
 
-      showFlyover, hideFlyover, toggleFlyover, about, filters, layer, search, score, data, load,
+      showFlyover, hideFlyover, toggleFlyover, about, table, filters, layer, search, score, data, load,
 
       getTargetById,
 
@@ -269,6 +270,76 @@ export default {
       </div>
       <div class="flex-1 bg-white overflow-auto px-4 space-y-4 text-sm">
         <p>Всем привет! ФСТЭК у нас что-то придумал, а мы постарались чтобы это выглядело хотя бы на 2015 год.</p>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div :class="table ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute top-0 bottom-9 inset-x-0 bg-white">
+      <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
+        <div class="flex-1 font-bold">Табличный вид</div>
+        <div>
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('table')">
+            <XIcon class="h-4 w-4 text-gray-400"/>
+          </div>
+        </div>
+      </div>
+      <div class="flex-1 overflow-auto bg-white h-full flex justify-center">
+        <div class="space-y-4 text-sm p-16">
+          <table>
+            <thead>
+              <tr class="font-bold">
+                <th class="p-2">Код</th>
+                <th class="p-2">Название</th>
+                <th class="p-2">Описание</th>
+                <th class="p-2">Объекты</th>
+                <th class="p-2">Нарушители</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="threat in filteredThreats"
+                :key="threat.id"
+                class="border-t"
+              >
+                <td class="p-2">{{ threat.bdu.code}}</td>
+                <td class="p-2">{{ threat.bdu.name}}</td>
+                <td class="space-y-4 p-2">
+                  <div>
+                    <p class="text-xs uppercase font-bold text-gray-400">Описание</p>
+                    <Markdown :source="threat.bdu.description" />
+                  </div>
+                  <div>
+                    <p class="text-xs uppercase font-bold text-gray-400">Чем обусловлена угроза</p>
+                    <Markdown :source="threat.bdu.reasons" />
+                  </div>
+                  <div>
+                    <p class="text-xs uppercase font-bold text-gray-400">Реализация</p>
+                    <Markdown :source="threat.bdu.realization" />
+                  </div>
+                </td>
+                <td class="p-2 space-y-1">
+                  <p
+                    v-for="targetId in threat.bdu.targets"
+                    :key="targetId"
+                  >{{ getTargetById(targetId).name }}</p>
+                </td>
+                <td class="p-2 space-y-1">
+                  <p v-for="i in threat.bdu.intruders" :key="i.id">
+                    <span>
+                      <span v-if="i.intruder === 'E'">Внешний</span>
+                      <span v-if="i.intruder === 'I'">Внутренний</span>
+                    </span>
+                    <span>
+                      <span v-if="i.potential === 1"> (низкий потенциал)</span>
+                      <span v-if="i.potential === 2"> (средний потенциал)</span>
+                      <span v-if="i.potential === 3"> (высокий потенциал)</span>
+                    </span>
+                  </p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -820,6 +891,11 @@ export default {
     <div class="z-50 h-10 bg-gray-50 border-t flex items-center justify-between px-4 text-xs">
       <div @click="toggleFlyover('about')" class="cursor-pointer"><span class="font-bold">FUBI</span> &middot; Sinfores SX</div>
       <div class="flex items-center space-x-2 border-b-2 border-transparent">
+        <!-- Table view -->
+        <div v-if="isLayerReady" @click="toggleFlyover('table')" :class="[table ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+          <TableIcon class="w-5 h-5" aria-hidden="true" />
+          <div>Таблица</div>
+        </div>
         <!-- Filters -->
         <div v-if="isLayerReady" @click="toggleFlyover('filters')" :class="[filters ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
           <FilterIcon class="w-5 h-5" aria-hidden="true" />
