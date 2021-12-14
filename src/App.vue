@@ -196,7 +196,7 @@ export default {
     const selectAllTargets = () => { copyTargets(); }
     const deselectAllTargets = () => { selectedTargets.value = []; }
     const filteredThreats = computed(() => {
-      return db.value.threats.filter(el => {
+      return db.value?.threats.filter(el => {
         const targetFlag = el.bdu.targets.find(t => selectedTargets.value.includes(t))
         const intruderFlag = el.bdu.intruders.find(intruder => selectedIntruders.value.includes(intruder.id))
         return targetFlag && intruderFlag
